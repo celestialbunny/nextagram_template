@@ -3,4 +3,4 @@ import peewee as pw
 
 
 class User(BaseModel):
-    name = pw.CharField(unique=False)
+    name = pw.CharField(unique=False, null=False)
