@@ -17,3 +17,4 @@ def internal_server_error(e):
 @app.route("/")
 def home():
     return render_template('home.html')
+
