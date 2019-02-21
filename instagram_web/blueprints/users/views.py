@@ -22,7 +22,7 @@ def new():
 
 @users_blueprint.route('/', methods=["GET"])
 def index():
-	return "USERS"
+	return render_template('index.html')
 
 @users_blueprint.route('/', methods=['POST'])
 def create():
@@ -53,12 +53,15 @@ def update():
 			flash("Please ensure that password is correctly typed for updates to take effect", "alert")
 			return redirect(url_for('users.login'))
 		else:
-			# update the user
-			updated_user = User(
-				username=form.data['username'],
+			'''update the user'''
+			updated_user = User.update().where(username=form.data['username'],
 				email=form.data['email'],
-				password=generate_password_hash(form.data['password'])
-			)
+				password=generate_password_hash(form.data['password']))
+			# updated_user = User(
+			# 	username=form.data['username'],
+			# 	email=form.data['email'],
+			# 	password=generate_password_hash(form.data['password'])
+			# )
 			updated_user.save()
 			flash("Update successful", "success")
 			return redirect(url_for('users.index'))
