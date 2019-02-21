@@ -6,7 +6,7 @@ from flask_wtf.csrf import CsrfProtect
 import os
 
 from models.user import User
-from instagram_web.blueprints.users.forms import RegistrationForm, LoginForm
+from instagram_web.blueprints.users.forms import RegistrationForm, LoginForm, UpdateDetailsForm
 from app import app
 web_dir = os.path.join(os.path.dirname(
 	os.path.abspath(__file__)), 'instagram_web')
@@ -36,10 +36,17 @@ def show(username):
 def edit(id):
 	pass
 
+# Need to be logged in
+# check user log in ID == requested user ID
+# if true: proceed, else: prompt
 
+# capture logged in user ID, then direct to the page
+# + redirect to correct user if tries to violate
+@login_required
 @users_blueprint.route('/<id>', methods=['POST'])
 def update(id):
-	pass
+	form = UpdateDetailsForm()
+	
 
 @users_blueprint.route("/register", methods=['GET', 'POST'])
 def register():
