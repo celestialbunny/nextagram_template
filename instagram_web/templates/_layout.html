@@ -11,6 +11,8 @@
 	<link rel="stylesheet" href="{{ ASSET_URL }}">
 	{% endassets %}
 
+	<link rel="stylesheet" href="{{ url_for('static', filename='css//icomoon/style.css')}}">
+
 	{% assets "home_js" %}
 	<script type="text/javascript" src="{{ ASSET_URL }}"></script>
 	{% endassets %}

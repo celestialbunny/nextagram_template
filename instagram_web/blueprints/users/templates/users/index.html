@@ -1,6 +1,14 @@
 {% include "_layout.html" %}
-<h2 class="text-center">Welcome to NEXTAGRAM</h2>
+<h2 class="text-center mb-4">
+	{% if current_user.is_anonymous %}
+	Welcome to NEXTAGRAM
+	{% else %}
+	Welcome {{ current_user.username }}
+	{% endif %}
+</h2>
+
 <div class="container">
+	{% if current_user.is_anonymous %}
 	<div class="row">
 		<div class="col-lg-6 col-md-12">
 			{% extends "login_form.html" %}
@@ -10,4 +18,35 @@
 			{% include "register_form.html" %}
 		</div>
 	</div>
+	{% else %}
+	<!-- Blocks of posts -->
+	<div class="row">
+		<div class="card col-sm-12">
+			<img class="card-img-top" src="..." alt="Card image cap">
+			<div class="card-body">
+				<h5 class="card-title">Card title</h5>
+				<p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+				<div class="row">
+					<div class="col-sm-2">
+						<label for="smile" class="icon icon-smile"></label>
+						<input type="checkbox" name="emoji" id="smile">
+						<span>2</span>
+					</div>
+					<div class="col-sm-2">
+						<label for="shocked" class="icon icon-shocked"></label>
+						<input type="checkbox" name="emoji" id="shocked">
+						<span>2</span>
+					</div>
+					<div class="col-sm-2">
+						<label for="sad" class="icon icon-sad"></label>
+						<input type="checkbox" name="emoji" id="sad">
+						<span>2</span>
+					</div>
+				</div>
+				<a href="#" class="btn btn-primary">Go somewhere</a>
+			</div>
+		</div>
+	</div>
+
+	{% endif %}
 </div>

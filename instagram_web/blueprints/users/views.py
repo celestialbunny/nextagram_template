@@ -4,6 +4,7 @@ from flask import Flask, g, render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CsrfProtect
 import os
+from peewee import IntegrityError
 
 from models.user import User
 from instagram_web.blueprints.users.forms import RegistrationForm, LoginForm, UpdateDetailsForm
@@ -31,14 +32,18 @@ def index():
 		'''Start of register block'''
 		if request.form['btn'] == 'Register':
 			if register_form.validate():
-				new_user = User(
-					username=register_form.data['username'],
-					email=register_form.data['email'],
-					password=generate_password_hash(register_form.data['password'])
-				)
-				new_user.save()
-				flash("Thanks for registering", "success")
-				return redirect(url_for('users.login'))
+				try:
+					new_user = User.create(
+						username=register_form.data['username'],
+						email=register_form.data['email'],
+						password=generate_password_hash(register_form.data['password'])
+					)
+					if new_user:
+						flash("Thanks for registering", "success")
+						return redirect(url_for('users.index'))
+				except IntegrityError:
+					flash("Duplicated username or email", "danger")
+					return redirect(url_for('users.register'))
 		'''End of register block'''
 
 		'''Start of login block'''
@@ -123,6 +128,7 @@ def login():
 			user = User.get_or_none(User.email == form.data['email'])
 			if user and check_password_hash(user.password, form.data['password']):
 				login_user(user)
+				session[user.username]
 				flash("You've been logged in!", "success")
 				return redirect(request.args.get('next') or url_for('users.index'))
 			else:
@@ -133,5 +139,6 @@ def login():
 @login_required
 def logout():
 	logout_user()
+	# session.pop(user.username, None)
 	flash("You've been logged out!", "success")
 	return redirect(url_for('users.login'))
