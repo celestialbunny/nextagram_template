@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, session, escape
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask import Flask, g, render_template, flash, redirect, url_for, request
 from flask_login import login_user, logout_user, login_required, current_user
@@ -25,9 +25,7 @@ def index():
 	register_form = RegistrationForm()
 	login_form = LoginForm()
 	'''
-
 	This is a POST block
-
 	'''
 	if request.method == 'POST':
 		'''Start of register block'''
