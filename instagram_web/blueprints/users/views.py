@@ -24,8 +24,6 @@ def new():
 def index():
 	register_form = RegistrationForm()
 	login_form = LoginForm()
-	if request.method == 'GET':
-		return render_template('index.html', register_form=register_form, login_form=login_form)
 	'''
 
 	This is a POST block
@@ -33,8 +31,8 @@ def index():
 	'''
 	if request.method == 'POST':
 		'''Start of register block'''
-		if register_form.validate() and register_form.submit.data:
-			if request.form['id'] == 'Register':
+		if request.form['btn'] == 'Register':
+			if register_form.validate():
 				new_user = User(
 					username=register_form.data['username'],
 					email=register_form.data['email'],
@@ -46,8 +44,8 @@ def index():
 		'''End of register block'''
 
 		'''Start of login block'''
-		if login_form.validate() and login_form.submit.data:
-			if request.form['id'] == 'Login':
+		if request.form['btn'] == 'Login':
+			if login_form.validate():
 				user = User.get_or_none(User.email == login_form.data['email'])
 				if user and check_password_hash(user.password, login_form.data['password']):
 					login_user(user)
@@ -56,6 +54,8 @@ def index():
 				else:
 					flash("Your email or password doesn't match!", "warning")
 		'''End of login block'''
+	else:
+		return render_template('index.html', register_form=register_form, login_form=login_form)
 
 @users_blueprint.route('/', methods=['POST'])
 def create():
