@@ -20,9 +20,42 @@ csrf = CsrfProtect(app)
 def new():
 	return render_template('new.html')
 
-@users_blueprint.route('/', methods=["GET"])
+@users_blueprint.route('/', methods=["GET", 'POST'])
 def index():
-	return render_template('index.html')
+	register_form = RegistrationForm()
+	login_form = LoginForm()
+	if request.method == 'GET':
+		return render_template('index.html', register_form=register_form, login_form=login_form)
+	'''
+
+	This is a POST block
+
+	'''
+	if request.method == 'POST':
+		'''Start of register block'''
+		if register_form.validate() and register_form.submit.data:
+			if request.form['id'] == 'Register':
+				new_user = User(
+					username=register_form.data['username'],
+					email=register_form.data['email'],
+					password=generate_password_hash(register_form.data['password'])
+				)
+				new_user.save()
+				flash("Thanks for registering", "success")
+				return redirect(url_for('users.login'))
+		'''End of register block'''
+
+		'''Start of login block'''
+		if login_form.validate() and login_form.submit.data:
+			if request.form['id'] == 'Login':
+				user = User.get_or_none(User.email == login_form.data['email'])
+				if user and check_password_hash(user.password, login_form.data['password']):
+					login_user(user)
+					flash("You've been logged in!", "success")
+					return redirect(request.args.get('next') or url_for('users.index'))
+				else:
+					flash("Your email or password doesn't match!", "warning")
+		'''End of login block'''
 
 @users_blueprint.route('/', methods=['POST'])
 def create():
@@ -68,7 +101,6 @@ def update():
 	if request.method == 'GET':
 		username = current_user.username
 		email = current_user.email
-		# then need to display 'username' and 'email' on the form
 		return render_template('update.html', form=form, username=username, email=email)
 
 @users_blueprint.route("/register", methods=['GET', 'POST'])
@@ -83,7 +115,7 @@ def register():
 		new_user.save()
 		flash("Thanks for registering", "success")
 		return redirect(url_for('users.login'))
-	return render_template('register.html', form=form)
+	return render_template('register.html', register_form=form)
 
 @users_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
@@ -97,7 +129,7 @@ def login():
 				return redirect(request.args.get('next') or url_for('users.index'))
 			else:
 				flash("Your email or password doesn't match!", "warning")
-	return render_template('login.html', form=form)
+	return render_template('login.html', login_form=form)
 
 @users_blueprint.route('/logout')
 @login_required

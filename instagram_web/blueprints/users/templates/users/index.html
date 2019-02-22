@@ -1,4 +1,12 @@
-{% extends "_layout.html" %}
-{% block content %}
+{% include "_layout.html" %}
 <h2 class="text-center">Welcome to NEXTAGRAM</h2>
-{% endblock %}
+<div class="container">
+	<div class="row">
+		<div class="col-lg-6 col-md-12">
+			{% extends "login_form.html" %}
+		</div>
+		<div class="col-lg-6 col-md-12">
+			{% include "register_form.html" %}
+		</div>
+	</div>
+</div>

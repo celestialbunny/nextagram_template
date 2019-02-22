@@ -19,7 +19,6 @@ else:
 def before_request():
 	db.connect()
 
-
 @app.after_request
 def after_request(response):
 	db.close()
