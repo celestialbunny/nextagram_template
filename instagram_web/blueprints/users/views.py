@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template, session, escape
-from werkzeug.security import check_password_hash, generate_password_hash
+from flask import Blueprint, render_template, session, escape, request
+from flask_bcrypt import check_password_hash, generate_password_hash
 from flask import Flask, g, render_template, flash, redirect, url_for, request
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, login_required, current_user, LoginManager
 from flask_wtf.csrf import CsrfProtect
 import os
 from peewee import IntegrityError
@@ -16,6 +16,9 @@ users_blueprint = Blueprint('users',
 							template_folder='templates/users')
 
 csrf = CsrfProtect(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'info'
 
 @users_blueprint.route('/new', methods=['GET'])
 def new():
@@ -78,9 +81,9 @@ def edit(id):
 
 # capture logged in user ID, then direct to the page
 # + redirect to correct user if tries to violate
-@login_required
 # @users_blueprint.route('/<id>', methods=['POST']) # can we use username instead?
 @users_blueprint.route('/update', methods=['POST', 'GET'])
+@login_required
 def update():
 	form = UpdateDetailsForm()
 	if request.method == 'POST' and form.validate():
@@ -108,31 +111,47 @@ def update():
 
 @users_blueprint.route("/register", methods=['GET', 'POST'])
 def register():
+	if current_user.is_authenticated:
+		flash("You have already been logged in, kindly log out to sign up for another account", "warning")
+		return redirect(url_for('user'))
 	form = RegistrationForm()
 	if request.method == 'POST' and form.validate():
-		new_user = User(
-			username=form.data['username'],
-			email=form.data['email'],
-			password=generate_password_hash(form.data['password'])
-		)
-		new_user.save()
-		flash("Thanks for registering", "success")
-		return redirect(url_for('users.login'))
+		try:
+			new_user = User(
+				username=form.data['username'],
+				email=form.data['email'],
+				password=generate_password_hash(form.data['password'])
+			)
+			new_user.save()
+			flash("Thanks for registering", "success")
+			return redirect(url_for('users.login'))
+		except IntegrityError:
+			new_user.validate_username(form.data['username'])
+			new_user.validate_email(form.data['email'])
+			# Still need to get the 2 lines above to work
+			flash('Duplication of either username or email', 'warning')
 	return render_template('register.html', register_form=form)
 
 @users_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
+	if current_user.is_authenticated:
+		flash("You have already been logged in, kindly log out to sign up for another account", "warning")
+		return redirect(url_for('users'))
 	form = LoginForm()
 	if request.method == 'POST':
 		if form.validate():
 			user = User.get_or_none(User.email == form.data['email'])
 			if user and check_password_hash(user.password, form.data['password']):
+				# login_user(user, remember=form.remember.data)
 				login_user(user)
-				session[user.username]
+				next_page = request.args.get('next')
 				flash("You've been logged in!", "success")
-				return redirect(request.args.get('next') or url_for('users.index'))
+				if next_page:
+					return redirect(next_page)
+				else:
+					return redirect(url_for('users'))
 			else:
-				flash("Your email or password doesn't match!", "warning")
+				flash("Login unsuccessful, Please check email and password", "danger")
 	return render_template('login.html', login_form=form)
 
 @users_blueprint.route('/logout')

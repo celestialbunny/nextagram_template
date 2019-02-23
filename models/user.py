@@ -8,19 +8,12 @@ class User(UserMixin, BaseModel):
 	email = pw.CharField(unique=True, null=False)
 	password = pw.CharField(unique=True, null=False)
 
-	# def validate(self):
-	# 	user = User.get_or_none(User.username == self.data)
-	# 	email = User.get_or_none(User.email == self.data)
-	# 	if user:
-	# 		raise pw.IntegrityError('Username is already taken. Please choose another username')
-	# 	if email:
-	# 		raise pw.IntegrityError('Email is already taken. Please choose another username')
+	def validate_username(self, username):
+		user = User.get_or_none(User.username == username)
+		if user:
+			raise pw.IntegrityError('Username has already been taken')
 
-		# try:
-		# 	pass
-		# except expression as identifier:
-		# 	pass
-		# else:
-		# 	pass
-		# finally:
-		# 	pass
+	def validate_email(self, email):
+		user = User.get_or_none(User.email == email)
+		if user:
+			raise pw.IntegrityError('Email address has already been taken')

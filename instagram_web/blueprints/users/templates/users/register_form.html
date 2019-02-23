@@ -11,7 +11,7 @@
 				{% if register_form.username.errors %}
 				{{ register_form.username(class="form-control form-control-lg is-invalid") }}
 				<div class="invalid-feedback">
-					{% for error in form.username.errors %}
+					{% for error in register_form.username.errors %}
 					<span>{{ error }}</span>
 					{% endfor %}
 				</div>
@@ -24,7 +24,7 @@
 				{% if register_form.email.errors %}
 				{{ register_form.email(class="form-control form-control-lg is-invalid") }}
 				<div class="invalid-feedback">
-					{% for error in form.email.errors %}
+					{% for error in register_form.email.errors %}
 					<span>{{ error }}</span>
 					{% endfor %}
 				</div>
@@ -37,7 +37,7 @@
 				{% if register_form.password.errors %}
 				{{ register_form.password(class="form-control form-control-lg is-invalid") }}
 				<div class="invalid-feedback">
-					{% for error in form.password.errors %}
+					{% for error in register_form.password.errors %}
 					<span>{{ error }}</span>
 					{% endfor %}
 				</div>
