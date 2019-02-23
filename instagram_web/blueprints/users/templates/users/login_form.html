@@ -1,6 +1,6 @@
 {% block content %}
 <div class="content-section">
-	<form method="POST" action="">
+	<form method="POST" action="" enctype="multipart/form-data">
 		{{ login_form.csrf_token }}
 		{{ login_form.hidden_tag() }}
 		<fieldset class="form-group">
@@ -10,7 +10,7 @@
 				{% if login_form.email.errors %}
 				{{ login_form.email(class="form-control form-control-lg is-invalid") }}
 				<div class="invalid-feedback">
-					{% for error in form.email.errors %}
+					{% for error in login_form.email.errors %}
 					<span>{{ error }}</span>
 					{% endfor %}
 				</div>
@@ -23,7 +23,7 @@
 				{% if login_form.password.errors %}
 				{{ login_form.password(class="form-control form-control-lg is-invalid") }}
 				<div class="invalid-feedback">
-					{% for error in form.password.errors %}
+					{% for error in login_form.password.errors %}
 					<span>{{ error }}</span>
 					{% endfor %}
 				</div>

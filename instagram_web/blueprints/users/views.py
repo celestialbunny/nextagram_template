@@ -1,28 +1,20 @@
-from flask import Blueprint, render_template, session, escape, request
-from flask_bcrypt import check_password_hash, generate_password_hash
-from flask import Flask, g, render_template, flash, redirect, url_for, request
-from flask_login import login_user, logout_user, login_required, current_user, LoginManager
-from flask_wtf.csrf import CsrfProtect
-import os
+from werkzeug.security import check_password_hash, generate_password_hash
+import secrets
 from peewee import IntegrityError
 
 from models.user import User
-from instagram_web.blueprints.users.forms import RegistrationForm, LoginForm, UpdateDetailsForm
-from app import app
+from instagram_web.blueprints.users.forms import (RegistrationForm, LoginForm, UpdateDetailsForm)
+from app import (app,
+				 Flask, render_template, flash, redirect, url_for, request,
+				 login_user, logout_user, login_required, current_user, LoginManager,
+				 Image,
+				 CsrfProtect, Blueprint, session, escape, CsrfProtect, os)
+
 web_dir = os.path.join(os.path.dirname(
 	os.path.abspath(__file__)), 'instagram_web')
 users_blueprint = Blueprint('users',
 							__name__,
 							template_folder='templates/users')
-
-csrf = CsrfProtect(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-login_manager.login_message_category = 'info'
-
-@users_blueprint.route('/new', methods=['GET'])
-def new():
-	return render_template('new.html')
 
 @users_blueprint.route('/', methods=["GET", 'POST'])
 def index():
@@ -75,39 +67,38 @@ def show(username):
 def edit(id):
 	pass
 
-# Need to be logged in
-# check user log in ID == requested user ID
-# if true: proceed, else: prompt
+def save_picture(form_picture):
+	# Generate random tokens to prevent filename from being similar
+	# split the filename and ext so that we can further process the ext
+	random_hex = secrets.token_hex(8)
+	_, f_ext = os.path.splitext(form_picture.filename)
+	picture_fn = random_hex + f_ext
+	picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
+	# profile pic is often small and no reason to take up too much bandwidth
+	output_size = (125, 125)
+	i = Image.open(form_picture)
+	i.thumbnail(output_size)
+	i.save(picture_path)
+	# return picture filename
+	return picture_fn
 
-# capture logged in user ID, then direct to the page
-# + redirect to correct user if tries to violate
-# @users_blueprint.route('/<id>', methods=['POST']) # can we use username instead?
 @users_blueprint.route('/update', methods=['POST', 'GET'])
 @login_required
 def update():
 	form = UpdateDetailsForm()
 	if request.method == 'POST' and form.validate():
-		password = check_password_hash(current_user.password, form.data['password'])
-		if not password:
-			flash("Please ensure that password is correctly typed for updates to take effect", "alert")
-			return redirect(url_for('users.login'))
-		else:
-			'''update the user'''
-			updated_user = User.update().where(username=form.data['username'],
-				email=form.data['email'],
-				password=generate_password_hash(form.data['password']))
-			# updated_user = User(
-			# 	username=form.data['username'],
-			# 	email=form.data['email'],
-			# 	password=generate_password_hash(form.data['password'])
-			# )
-			updated_user.save()
-			flash("Update successful", "success")
-			return redirect(url_for('users.index'))
-	if request.method == 'GET':
-		username = current_user.username
-		email = current_user.email
-		return render_template('update.html', form=form, username=username, email=email)
+		if form.picture.data:
+			picture_file = save_picture(form.picture.data)
+			current_user.image_file = picture_file
+		# How to update the details??????
+		# current_user.save(form.username.data, form.email.data)
+		flash("Update successful", "success")
+		return redirect(url_for('users.index'))
+	elif request.method == 'GET':
+		form.username.data = current_user.username
+		form.email.data = current_user.email
+	image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+	return render_template('update.html', image_file=image_file, form=form)
 
 @users_blueprint.route("/register", methods=['GET', 'POST'])
 def register():
@@ -135,8 +126,8 @@ def register():
 @users_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
 	if current_user.is_authenticated:
-		flash("You have already been logged in, kindly log out to sign up for another account", "warning")
-		return redirect(url_for('users'))
+		flash("You have already been logged in", "warning")
+		return redirect(url_for('users.index'))
 	form = LoginForm()
 	if request.method == 'POST':
 		if form.validate():
@@ -149,7 +140,7 @@ def login():
 				if next_page:
 					return redirect(next_page)
 				else:
-					return redirect(url_for('users'))
+					return redirect(url_for('users.index'))
 			else:
 				flash("Login unsuccessful, Please check email and password", "danger")
 	return render_template('login.html', login_form=form)
