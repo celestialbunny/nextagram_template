@@ -1,13 +1,18 @@
+from flask import Flask, render_template, flash, redirect, url_for, request, Blueprint, abort
+from flask_login import login_user, logout_user, login_required, current_user, LoginManager
+from flask_wtf import CSRFProtect
 from peewee import IntegrityError
+import os
 
 from models.post import Post
 # from instagram_web.blueprints.posts.forms import PostForm
-from instagram_web.blueprints.posts.forms import PostForm
-from app import (app,
-				 Flask, render_template, flash, redirect, url_for, request,
-				 login_user, logout_user, login_required, current_user, LoginManager,
-				 Image,
-				 CsrfProtect, Blueprint, session, escape, CsrfProtect, os)
+from instagram_web.blueprints.posts.templates.forms import PostForm
+
+from app import app
+
+login_manager = LoginManager(app)
+login_manager.login_view = 'users.login'
+login_manager.login_message_category = 'info'
 
 web_dir = os.path.join(os.path.dirname(
 	os.path.abspath(__file__)), 'instagram_web')
@@ -26,18 +31,33 @@ def new_post():
 		return redirect(url_for('users.index'))
 	return render_template('create_post.html', title='New Post', form=form, legend='New Post')
 
-@posts_blueprint.route('/', methods=["GET", 'POST'])
-def index():
-	pass
+@posts_blueprint.route('/<int:post_id>')
+def post(post_id):
+	post = Post.query.get_or_404(post_id)
+	return render_template('post.html', title=post.title, post=post)
 
-@posts_blueprint.route('/', methods=['GET', 'POST'])
-def create():
-	pass
+@posts_blueprint.route('/post/<int:post_id>/update', methods=['GET', 'POST'])
+@login_required
+def update_post(post_id):
+	post = Post.query.get_or_404(post_id)
+	if post.author != current_user:
+		abort(403)
+	form = PostForm()
+	if form.validate_on_submit():
+		post.save(form.title.data, form.content.data)
+		flash('Post updated!', 'info')
+		return redirect(url_for('post', post_id=post.id))
+	elif request.method == 'GET':
+		form.title.data = post.title
+		form.content.data = post.content
+	return render_template('create_post.html', title='Update Post', form=form)
 
-@posts_blueprint.route('/<username>', methods=["GET"])
-def show(username):
-	pass
-
-@posts_blueprint.route('/<id>/edit', methods=['GET'])
-def edit(id):
-	pass
+@app.route("/<int:post_id>/delete", methods=['POST'])
+@login_required
+def delete_post(post_id):
+	post = Post.query.get_or_404(post_id)
+	if post.author != current_user:
+		abort(403)
+	# How to execute the delete command???
+	flash('Post has been deleted!', 'info')
+	return redirect(url_for('home'))

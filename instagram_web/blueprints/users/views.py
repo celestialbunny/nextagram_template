@@ -1,14 +1,19 @@
 from werkzeug.security import check_password_hash, generate_password_hash
-import secrets
+import secrets, os
+from PIL import Image
+from flask import Flask, render_template, flash, redirect, url_for, request, Blueprint
+from flask_login import login_user, logout_user, login_required, current_user, LoginManager
+from flask_wtf import CSRFProtect
 from peewee import IntegrityError
 
 from models.user import User
 from instagram_web.blueprints.users.forms import (RegistrationForm, LoginForm, UpdateDetailsForm)
-from app import (app,
-				 Flask, render_template, flash, redirect, url_for, request,
-				 login_user, logout_user, login_required, current_user, LoginManager,
-				 Image,
-				 CsrfProtect, Blueprint, session, escape, CsrfProtect, os)
+
+from app import app
+
+login_manager = LoginManager(app)
+login_manager.login_view = 'users.login'
+login_manager.login_message_category = 'info'
 
 web_dir = os.path.join(os.path.dirname(
 	os.path.abspath(__file__)), 'instagram_web')
@@ -26,38 +31,36 @@ def index():
 	if request.method == 'POST':
 		'''Start of register block'''
 		if request.form['btn'] == 'Register':
-			if register_form.validate():
-				try:
-					new_user = User.create(
-						username=register_form.data['username'],
-						email=register_form.data['email'],
-						password=generate_password_hash(register_form.data['password'])
-					)
-					if new_user:
-						flash("Thanks for registering", "success")
-						return redirect(url_for('users.index'))
-				except IntegrityError:
-					flash("Duplicated username or email", "danger")
-					return redirect(url_for('users.register'))
+			register()
+			# if register_form.validate():
+			# 	try:
+			# 		new_user = User.create(
+			# 			username=register_form.data['username'],
+			# 			email=register_form.data['email'],
+			# 			password=generate_password_hash(register_form.data['password'])
+			# 		)
+			# 		if new_user:
+			# 			flash("Thanks for registering", "success")
+			# 			return redirect(url_for('users.index'))
+			# 	except IntegrityError:
+			# 		flash("Duplicated username or email", "danger")
+			# 		return redirect(url_for('users.register'))
 		'''End of register block'''
 
 		'''Start of login block'''
 		if request.form['btn'] == 'Login':
-			if login_form.validate():
-				user = User.get_or_none(User.email == login_form.data['email'])
-				if user and check_password_hash(user.password, login_form.data['password']):
-					login_user(user)
-					flash("You've been logged in!", "success")
-					return redirect(request.args.get('next') or url_for('users.index'))
-				else:
-					flash("Your email or password doesn't match!", "warning")
+			login()
+			# if login_form.validate():
+			# 	user = User.get_or_none(User.email == login_form.data['email'])
+			# 	if user and check_password_hash(user.password, login_form.data['password']):
+			# 		login_user(user)
+			# 		flash("You've been logged in!", "success")
+			# 		return redirect(request.args.get('next') or url_for('users.index'))
+			# 	else:
+			# 		flash("Your email or password doesn't match!", "warning")
 		'''End of login block'''
 	else:
 		return render_template('index.html', register_form=register_form, login_form=login_form)
-
-@users_blueprint.route('/', methods=['POST'])
-def create():
-	pass
 
 @users_blueprint.route('/<username>', methods=["GET"])
 def show(username):
@@ -149,6 +152,5 @@ def login():
 @login_required
 def logout():
 	logout_user()
-	# session.pop(user.username, None)
 	flash("You've been logged out!", "success")
 	return redirect(url_for('users.login'))

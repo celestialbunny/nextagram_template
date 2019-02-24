@@ -10,11 +10,11 @@
 {% if current_user.is_anonymous %}
 <div class="container">
 	<div class="row">
-		<div class="col-lg-6 col-md-12">
+		<div class="col-lg-6 col-md-6 cols-sm-12">
 			{% extends "login_form.html" %}
 		</div>
 		<hr>
-		<div class="col-lg-6 col-md-12">
+		<div class="col-lg-6 col-md-6 col-sm-12">
 			{% include "register_form.html" %}
 		</div>
 	</div>
