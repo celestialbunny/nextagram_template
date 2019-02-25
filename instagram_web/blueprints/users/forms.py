@@ -25,7 +25,7 @@ class RegistrationForm(FlaskForm):
 			Length(min=8, max=20)
 		]
 	)
-	submit = SubmitField('Sign Up')
+	btn = SubmitField('Sign Up')
 
 
 class LoginForm(FlaskForm):
@@ -43,7 +43,7 @@ class LoginForm(FlaskForm):
 		]
 	)
 	# remember = BooleanField('Remember Me')
-	submit = SubmitField('Login')
+	btn = SubmitField('Login')
 
 class UpdateDetailsForm(FlaskForm):
 	username = StringField(

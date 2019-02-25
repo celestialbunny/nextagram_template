@@ -21,6 +21,11 @@ users_blueprint = Blueprint('users',
 							__name__,
 							template_folder='templates/users')
 
+@users_blueprint.errorhandler(404)
+def page_not_found(e):
+	# note that we set the 404 status explicitly
+	return render_template('404.html'), 404
+
 @users_blueprint.route('/', methods=["GET", 'POST'])
 def index():
 	register_form = RegistrationForm()
@@ -31,33 +36,33 @@ def index():
 	if request.method == 'POST':
 		'''Start of register block'''
 		if request.form['btn'] == 'Register':
-			register()
-			# if register_form.validate():
-			# 	try:
-			# 		new_user = User.create(
-			# 			username=register_form.data['username'],
-			# 			email=register_form.data['email'],
-			# 			password=generate_password_hash(register_form.data['password'])
-			# 		)
-			# 		if new_user:
-			# 			flash("Thanks for registering", "success")
-			# 			return redirect(url_for('users.index'))
-			# 	except IntegrityError:
-			# 		flash("Duplicated username or email", "danger")
-			# 		return redirect(url_for('users.register'))
+			# register()
+			if register_form.validate():
+				try:
+					new_user = User.create(
+						username=register_form.data['username'],
+						email=register_form.data['email'],
+						password=generate_password_hash(register_form.data['password'])
+					)
+					if new_user:
+						flash("Thanks for registering", "success")
+						return redirect(url_for('users.index'))
+				except IntegrityError:
+					flash("Duplicated username or email", "danger")
+					return redirect(url_for('users.register'))
 		'''End of register block'''
 
 		'''Start of login block'''
 		if request.form['btn'] == 'Login':
-			login()
-			# if login_form.validate():
-			# 	user = User.get_or_none(User.email == login_form.data['email'])
-			# 	if user and check_password_hash(user.password, login_form.data['password']):
-			# 		login_user(user)
-			# 		flash("You've been logged in!", "success")
-			# 		return redirect(request.args.get('next') or url_for('users.index'))
-			# 	else:
-			# 		flash("Your email or password doesn't match!", "warning")
+			# login()
+			if login_form.validate():
+				user = User.get_or_none(User.email == login_form.data['email'])
+				if user and check_password_hash(user.password, login_form.data['password']):
+					login_user(user)
+					flash("You've been logged in!", "success")
+					return redirect(request.args.get('next') or url_for('users.index'))
+				else:
+					flash("Your email or password doesn't match!", "warning")
 		'''End of login block'''
 	else:
 		return render_template('index.html', register_form=register_form, login_form=login_form)
@@ -77,6 +82,8 @@ def save_picture(form_picture):
 	_, f_ext = os.path.splitext(form_picture.filename)
 	picture_fn = random_hex + f_ext
 	picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
+
+
 	# profile pic is often small and no reason to take up too much bandwidth
 	output_size = (125, 125)
 	i = Image.open(form_picture)
@@ -138,6 +145,7 @@ def login():
 			if user and check_password_hash(user.password, form.data['password']):
 				# login_user(user, remember=form.remember.data)
 				login_user(user)
+				breakpoint()
 				next_page = request.args.get('next')
 				flash("You've been logged in!", "success")
 				if next_page:
