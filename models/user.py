@@ -15,6 +15,7 @@ class User(UserMixin, BaseModel):
 		user = User.get_or_none(User.username == username)
 		if user:
 			raise pw.IntegrityError('Username has already been taken')
+			# ceate an attribute and append to self.errors[] and display the error as using raise will result in crash
 
 	def validate_email(self, email):
 		user = User.get_or_none(User.email == email)

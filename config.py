@@ -7,12 +7,14 @@ class Config(object):
     CSRF_ENABLED = True
     SECRET_KEY = os.environ.get(
         'SECRET_KEY') or os.urandom(32)
+    S3_KEY = os.environ.get('S3_KEY')
+    S3_SECRET = os.environ.get('S3_SECRET')
 
 
 class ProductionConfig(Config):
     DEBUG = False
     ASSETS_DEBUG = False
-
+    
 
 class StagingConfig(Config):
     DEVELOPMENT = False

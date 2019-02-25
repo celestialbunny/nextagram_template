@@ -1,18 +1,11 @@
-from flask import Flask, render_template, flash, redirect, url_for, request, Blueprint, abort
-from flask_login import login_user, logout_user, login_required, current_user, LoginManager
-from flask_wtf import CSRFProtect
-from peewee import IntegrityError
 import os
+from peewee import IntegrityError
 
 from models.post import Post
-# from instagram_web.blueprints.posts.forms import PostForm
-from instagram_web.blueprints.posts.templates.forms import PostForm
+from instagram_web.blueprints.posts.forms import PostForm
 
-from app import app
-
-login_manager = LoginManager(app)
-login_manager.login_view = 'users.login'
-login_manager.login_message_category = 'info'
+from app import (render_template, flash, redirect, url_for, request, 					session, escape, Blueprint, abort,
+				login_user, logout_user, login_required, current_user, LoginManager)
 
 web_dir = os.path.join(os.path.dirname(
 	os.path.abspath(__file__)), 'instagram_web')
@@ -52,7 +45,7 @@ def update_post(post_id):
 		form.content.data = post.content
 	return render_template('create_post.html', title='Update Post', form=form)
 
-@app.route("/<int:post_id>/delete", methods=['POST'])
+@posts_blueprint.route("/<int:post_id>/delete", methods=['POST'])
 @login_required
 def delete_post(post_id):
 	post = Post.query.get_or_404(post_id)

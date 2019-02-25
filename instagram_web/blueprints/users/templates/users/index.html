@@ -1,23 +1,15 @@
 {% include "_layout.html" %}
 <h2 class="text-center mb-4">
-	{% if current_user.is_anonymous %}
-	Welcome to NEXTAGRAM
-	{% else %}
+	{% if current_user.is_authenticated %}
 	Welcome {{ current_user.username }}
+	{% else %}
+	Welcome to NEXTAGRAM
 	{% endif %}
 </h2>
 
 {% if current_user.is_anonymous %}
 <div class="container">
-	<div class="row">
-		<div class="col-lg-6 col-md-6 cols-sm-12">
-			{% extends "login_form.html" %}
-		</div>
-		<hr>
-		<div class="col-lg-6 col-md-6 col-sm-12">
-			{% include "register_form.html" %}
-		</div>
-	</div>
+	<h4>Welcome to the XD social site!</h4>
 </div>
 {% else %}
 <!-- Blocks of posts -->

@@ -1,19 +1,14 @@
 from werkzeug.security import check_password_hash, generate_password_hash
 import secrets, os
 from PIL import Image
-from flask import Flask, render_template, flash, redirect, url_for, request, Blueprint
-from flask_login import login_user, logout_user, login_required, current_user, LoginManager
-from flask_wtf import CSRFProtect
 from peewee import IntegrityError
 
 from models.user import User
 from instagram_web.blueprints.users.forms import (RegistrationForm, LoginForm, UpdateDetailsForm)
+from util.s3_helper import upload_file_to_s3
 
-from app import app
-
-login_manager = LoginManager(app)
-login_manager.login_view = 'users.login'
-login_manager.login_message_category = 'info'
+from app import (app, render_template, flash, redirect, url_for, request, 					session, escape, Blueprint,
+				login_user, logout_user, login_required, current_user, LoginManager)
 
 web_dir = os.path.join(os.path.dirname(
 	os.path.abspath(__file__)), 'instagram_web')
@@ -21,59 +16,15 @@ users_blueprint = Blueprint('users',
 							__name__,
 							template_folder='templates/users')
 
-@users_blueprint.errorhandler(404)
-def page_not_found(e):
-	# note that we set the 404 status explicitly
-	return render_template('404.html'), 404
+def redirect_if_logged_in():
+	if current_user.is_authenticated:
+		flash("You have already been logged in", "warning")
+		return redirect(url_for('users.index'))
 
 @users_blueprint.route('/', methods=["GET", 'POST'])
 def index():
-	register_form = RegistrationForm()
-	login_form = LoginForm()
-	'''
-	This is a POST block
-	'''
-	if request.method == 'POST':
-		'''Start of register block'''
-		if request.form['btn'] == 'Register':
-			# register()
-			if register_form.validate():
-				try:
-					new_user = User.create(
-						username=register_form.data['username'],
-						email=register_form.data['email'],
-						password=generate_password_hash(register_form.data['password'])
-					)
-					if new_user:
-						flash("Thanks for registering", "success")
-						return redirect(url_for('users.index'))
-				except IntegrityError:
-					flash("Duplicated username or email", "danger")
-					return redirect(url_for('users.register'))
-		'''End of register block'''
-
-		'''Start of login block'''
-		if request.form['btn'] == 'Login':
-			# login()
-			if login_form.validate():
-				user = User.get_or_none(User.email == login_form.data['email'])
-				if user and check_password_hash(user.password, login_form.data['password']):
-					login_user(user)
-					flash("You've been logged in!", "success")
-					return redirect(request.args.get('next') or url_for('users.index'))
-				else:
-					flash("Your email or password doesn't match!", "warning")
-		'''End of login block'''
-	else:
-		return render_template('index.html', register_form=register_form, login_form=login_form)
-
-@users_blueprint.route('/<username>', methods=["GET"])
-def show(username):
-	pass
-
-@users_blueprint.route('/<id>/edit', methods=['GET'])
-def edit(id):
-	pass
+	breakpoint()
+	return render_template('index.html')
 
 def save_picture(form_picture):
 	# Generate random tokens to prevent filename from being similar
@@ -112,9 +63,7 @@ def update():
 
 @users_blueprint.route("/register", methods=['GET', 'POST'])
 def register():
-	if current_user.is_authenticated:
-		flash("You have already been logged in, kindly log out to sign up for another account", "warning")
-		return redirect(url_for('user'))
+	redirect_if_logged_in()
 	form = RegistrationForm()
 	if request.method == 'POST' and form.validate():
 		try:
@@ -127,17 +76,16 @@ def register():
 			flash("Thanks for registering", "success")
 			return redirect(url_for('users.login'))
 		except IntegrityError:
-			new_user.validate_username(form.data['username'])
-			new_user.validate_email(form.data['email'])
+			# new_user.validate_username(form.data['username'])
+			# new_user.validate_email(form.data['email'])
 			# Still need to get the 2 lines above to work
 			flash('Duplication of either username or email', 'warning')
 	return render_template('register.html', register_form=form)
 
+
 @users_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
-	if current_user.is_authenticated:
-		flash("You have already been logged in", "warning")
-		return redirect(url_for('users.index'))
+	redirect_if_logged_in()
 	form = LoginForm()
 	if request.method == 'POST':
 		if form.validate():
@@ -145,13 +93,14 @@ def login():
 			if user and check_password_hash(user.password, form.data['password']):
 				# login_user(user, remember=form.remember.data)
 				login_user(user)
-				breakpoint()
 				next_page = request.args.get('next')
 				flash("You've been logged in!", "success")
-				if next_page:
-					return redirect(next_page)
-				else:
-					return redirect(url_for('users.index'))
+				# if next_page:
+				# 	return redirect(url_for(next_page))
+				# else:
+				# 	breakpoint()
+				return redirect(url_for('users.index', current_user=user))
+					# return render_template('index.html')
 			else:
 				flash("Login unsuccessful, Please check email and password", "danger")
 	return render_template('login.html', login_form=form)
@@ -162,3 +111,14 @@ def logout():
 	logout_user()
 	flash("You've been logged out!", "success")
 	return redirect(url_for('users.login'))
+
+@users_blueprint.route('/')
+def upload():
+	file = request.file["user_file"]
+	output = upload_file_to_s3(file, app.config['celestialbunny-nextagram'])
+	return render_template('users/edit_profile_pic.html')
+
+@users_blueprint.route('/', methods=['POST'])
+def upload_file():
+	return 'haha'
+	# refer to util/<random name: such as s3_helper.py> to help s3 account posting
