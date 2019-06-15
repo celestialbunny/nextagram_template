@@ -95,12 +95,10 @@ def login():
 				login_user(user)
 				next_page = request.args.get('next')
 				flash("You've been logged in!", "success")
-				# if next_page:
-				# 	return redirect(url_for(next_page))
-				# else:
-				# 	breakpoint()
-				return redirect(url_for('users.index', current_user=user))
-					# return render_template('index.html')
+				if next_page:
+					return redirect(url_for(next_page))
+				else:
+					return redirect(url_for('users.index', current_user=user))
 			else:
 				flash("Login unsuccessful, Please check email and password", "danger")
 	return render_template('login.html', login_form=form)
